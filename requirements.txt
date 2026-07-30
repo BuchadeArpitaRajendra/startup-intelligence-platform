@@ -1,0 +1,21 @@
+# Core Framework & ASGI Server
+fastapi>=0.115.0
+uvicorn>=0.30.0
+
+# Pydantic & Environments
+pydantic>=2.7.0
+pydantic-settings>=2.4.0
+python-dotenv>=1.0.1
+
+# Database & Driver
+sqlalchemy>=2.0.35
+psycopg[binary]>=3.2.0
+
+# Modern Authentication (Replaces unmaintained passlib and python-jose)
+pwdlib[argon2]>=0.2.0
+pyjwt[crypto]>=2.9.0
+python-multipart>=0.0.12
+
+
+
+
