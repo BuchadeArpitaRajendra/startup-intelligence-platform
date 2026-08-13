@@ -15,7 +15,9 @@ psycopg[binary]>=3.2.0
 pwdlib[argon2]>=0.2.0
 pyjwt[crypto]>=2.9.0
 python-multipart>=0.0.12
-
+alembic>=1.19.1
+psycopg2-binary>=2.9.12
+passlib[bcrypt]>=1.7.4
 
 
 

@@ -1,26 +1,58 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="Startup Intelligence Platform")
+# Import routers
+from backend.app.api import startups, founders
+from backend.app.database import engine
+from backend.app.models import Base
 
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+# Create FastAPI app
+app = FastAPI(
+    title="Startup Intelligence Platform",
+    description="AI-Powered Startup Validation Platform",
+    version="0.1.0"
+)
+
+# CORS middleware (allows frontend to call backend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # React default port
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(startups.router)
+app.include_router(founders.router)
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Startup Intelligence Platform API",
+        "version": "0.1.0",
+        "endpoints": [
+            "/api/startups",
+            "/api/founders",
+            "/health"
+        ]
+    }
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "database": "connected"}
+
+# Pydantic model for startup creation
 class StartupCreate(BaseModel):
     name: str
     industry: str
     problem_statement: str
     solution: str
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World! Startup Intelligence Platform is running"}
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
-
-@app.get("/startups/{startup_id}")
-async def get_startup(startup_id: int):
-    return {"startup_id": startup_id, "name": f"Startup {startup_id}"}
-#python -m uvicorn main:app --reload
+    #
 
 @app.post("/startups/")
 async def create_startup(startup: StartupCreate):
@@ -28,3 +60,27 @@ async def create_startup(startup: StartupCreate):
         "message": f"Startup {startup.name} created!",
         "data": startup
     }
+
+@app.get("/startups/{startup_id}")
+async def get_startup(startup_id: int):
+    return {"startup_id": startup_id, "name": f"Startup {startup_id}"}
+
+@app.put("/startups/{startup_id}")
+async def update_startup(startup_id: int, startup: StartupCreate):
+    return {
+        "message": f"Startup {startup_id} updated!",
+        "updated_data": startup
+    }
+
+@app.delete("/startups/{startup_id}")
+async def delete_startup(startup_id: int):
+    return {"message": f"Startup {startup_id} deleted!"}
+
+@app.get("/search/")
+async def search_startups(q: str, limit: int = 10):
+    return {
+        "search_term": q,
+        "limit": limit,
+        "results": []  # We'll add real data later
+    }
+#python -m uvicorn main:app --reload
