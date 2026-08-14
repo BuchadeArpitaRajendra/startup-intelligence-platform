@@ -12,6 +12,13 @@ class FounderBase(BaseModel):
 class FounderCreate(FounderBase):
     password: str
 
+class FounderRegister(BaseModel):
+    email: EmailStr
+    full_name: str
+    password: str
+    expertise: Optional[str] = None
+    experience_years: Optional[int] = 0
+
 class FounderResponse(FounderBase):
     id: int
     created_at: datetime
@@ -45,6 +52,18 @@ class StartupResponse(StartupBase):
     pitch_video_url: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+# === Token Schemas ===
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    founder_id: Optional[int] = None
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
     
     class Config:
         from_attributes = True
