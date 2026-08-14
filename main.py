@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # Import routers
-from backend.app.api import startups, founders, auth
+from backend.app.api import startups, founders, auth, invitations, cofounder
 from backend.app.database import engine
 from backend.app.models import Base
 
@@ -28,6 +28,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router)
+app.include_router(invitations.router) 
+app.include_router(cofounder.router)
 app.include_router(startups.router)
 app.include_router(founders.router)
 
@@ -40,6 +42,8 @@ async def root():
             "/api/auth/register",
             "/api/auth/login",
             "/api/auth/me",
+            "/api/invitations",
+            "/api/cofounder",
             "/api/startups",
             "/api/founders",
             "/health"

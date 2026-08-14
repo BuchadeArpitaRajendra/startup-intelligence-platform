@@ -151,3 +151,36 @@ async def upload_pitch_video(
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/", response_model=StartupResponse)
+def create_startup(
+    startup: StartupCreate,
+    db: Session = Depends(get_db),
+    current_founder: Founder = Depends(get_current_active_founder)
+):
+    """Create a new startup (requires authentication)"""
+    # Use authenticated user's ID if founder_id is not provided
+    founder_id = startup.founder_id or current_founder.id
+    
+    # Check if the founder exists (if provided)
+    founder = db.query(Founder).filter(Founder.id == founder_id).first()
+    if not founder:
+        raise HTTPException(status_code=404, detail="Founder not found")
+    
+    # Create startup with the determined founder_id
+    db_startup = Startup(
+        name=startup.name,
+        industry=startup.industry,
+        problem_statement=startup.problem_statement,
+        solution=startup.solution,
+        target_customers=startup.target_customers,
+        business_model=startup.business_model,
+        funding_requirement=startup.funding_requirement,
+        market_size=startup.market_size,
+        competition=startup.competition,
+        founder_id=founder_id  # Use the determined ID
+    )
+    db.add(db_startup)
+    db.commit()
+    db.refresh(db_startup)
+    return db_startup

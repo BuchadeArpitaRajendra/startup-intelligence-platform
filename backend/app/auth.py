@@ -60,13 +60,17 @@ async def get_current_founder(
     try:
         # Decode the JWT token
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        # encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-        founder_id: int = payload.get("sub")
-        if founder_id is None:
+        
+        # Safely extract and cast the ID to an integer
+        sub_value = payload.get("sub")
+        if sub_value is None:
             raise credentials_exception
+            
+        founder_id = int(sub_value) # 👈 Explicitly cast to integer to avoid type mismatch
         token_data = TokenData(founder_id=founder_id)
-    except JWTError:
+    except (JWTError, ValueError): # 👈 Added ValueError in case casting fails
         raise credentials_exception
+
     
     # Get the founder from database
     founder = db.query(Founder).filter(Founder.id == token_data.founder_id).first()

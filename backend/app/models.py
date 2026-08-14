@@ -47,3 +47,89 @@ class Startup(Base):
     
     # Relationship with founder
     founder = relationship("Founder", back_populates="startups")
+
+class CoFounderInvitation(Base):
+    __tablename__ = "cofounder_invitations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    startup_id = Column(Integer, ForeignKey("startups.id"), nullable=False)
+    inviter_id = Column(Integer, ForeignKey("founders.id"), nullable=False)
+    invitee_email = Column(String(255), nullable=False)
+    status = Column(String(50), default="pending")
+    token = Column(String(255), unique=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)  # Remove timezone=True
+    created_at = Column(DateTime, server_default=func.now())  # Remove timezone=True
+    
+class PitchDeckComment(Base):
+    __tablename__ = "pitch_deck_comments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    startup_id = Column(Integer, ForeignKey("startups.id"), nullable=False)
+    founder_id = Column(Integer, ForeignKey("founders.id"), nullable=False)
+    slide_number = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    startup = relationship("Startup")
+    founder = relationship("Founder")
+
+class PitchVideoComment(Base):
+    __tablename__ = "pitch_video_comments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    startup_id = Column(Integer, ForeignKey("startups.id"), nullable=False)
+    founder_id = Column(Integer, ForeignKey("founders.id"), nullable=False)
+    timestamp = Column(Float, nullable=False)  # seconds in video
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    startup = relationship("Startup")
+    founder = relationship("Founder")
+
+class CoFounderRating(Base):
+    __tablename__ = "cofounder_ratings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    startup_id = Column(Integer, ForeignKey("startups.id"), nullable=False)
+    founder_id = Column(Integer, ForeignKey("founders.id"), nullable=False)
+    dimension = Column(String(100), nullable=False)  # founder_vision, business_model, etc.
+    rating = Column(Integer, nullable=False)  # 1-5
+    comment = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    startup = relationship("Startup")
+    founder = relationship("Founder")
+
+class DiscussionPost(Base):
+    __tablename__ = "discussion_posts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    startup_id = Column(Integer, ForeignKey("startups.id"), nullable=False)
+    founder_id = Column(Integer, ForeignKey("founders.id"), nullable=False)
+    content = Column(Text, nullable=False)
+    parent_id = Column(Integer, ForeignKey("discussion_posts.id"), nullable=True)  # For replies
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    startup = relationship("Startup")
+    founder = relationship("Founder")
+    replies = relationship("DiscussionPost", backref="parent", remote_side=[id])
+
+class FinalDecision(Base):
+    __tablename__ = "final_decisions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    startup_id = Column(Integer, ForeignKey("startups.id"), nullable=False)
+    founder_id = Column(Integer, ForeignKey("founders.id"), nullable=False)
+    decision = Column(String(50), nullable=False)  # approve, needs_changes, reject
+    rationale = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    startup = relationship("Startup")
+    founder = relationship("Founder")
