@@ -40,7 +40,7 @@ class StartupBase(BaseModel):
     founder_id: Optional[int] = None
 
 class StartupCreate(StartupBase):
-    founder_id: int
+    founder_id: Optional[int] = None  # 👈 Make it optional with None default
 
 class StartupUpdate(StartupBase):
     pass

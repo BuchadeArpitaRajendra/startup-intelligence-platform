@@ -16,12 +16,15 @@ def create_startup(
     db: Session = Depends(get_db),
     current_founder: Founder = Depends(get_current_active_founder) 
 ):
-    """Create a new startup (requires authentication)"""
-    # Auto-set founder_id from authenticated user
+    # Convert to dict and EXCLUDE 'founder_id' to avoid duplicate key errors
+    startup_data = startup.dict(exclude={'founder_id'}) 
+    
+    # Create the startup with the authenticated user's ID
     db_startup = Startup(
-        **startup.dict(exclude={'founder_id'}),  # Exclude founder_id from request
-        founder_id=current_founder.id  # Use authenticated user's ID
+        **startup_data, 
+        founder_id=current_founder.id
     )
+    
     db.add(db_startup)
     db.commit()
     db.refresh(db_startup)
