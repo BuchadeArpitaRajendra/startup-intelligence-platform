@@ -71,7 +71,7 @@ def get_pending_invitations(
     """Get pending invitations for the current founder"""
     now = datetime.now(timezone.utc)
     invitations = db.query(CoFounderInvitation).filter(
-        CoFounderInvitation.invitee_email == current_founder.email,
+        CoFounderInvitation.invitee_email == current_founder.email,  # Make sure this matches the new email!
         CoFounderInvitation.status == "pending",
         CoFounderInvitation.expires_at > now
     ).all()

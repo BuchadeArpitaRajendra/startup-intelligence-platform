@@ -3,6 +3,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import CreateStartup from './pages/CreateStartup';
+import Invitations from './pages/Invitations';
+import StartupDetails from './pages/StartupDetails'; // 👈 ADD THIS IMPORT HERE
 
 // Simple Protected Route wrapper
 const ProtectedRoute = ({ children }) => {
@@ -25,6 +27,16 @@ function App() {
         <Route path="/create-startup" element={
           <ProtectedRoute>
             <CreateStartup />
+          </ProtectedRoute>
+        } />
+        <Route path="/invitations" element={
+          <ProtectedRoute>
+            <Invitations />
+          </ProtectedRoute>
+        } />
+        <Route path="/startup/:id" element={ // 👈 THIS ROUTE WAS ALREADY THERE
+          <ProtectedRoute>
+            <StartupDetails />
           </ProtectedRoute>
         } />
       </Routes>

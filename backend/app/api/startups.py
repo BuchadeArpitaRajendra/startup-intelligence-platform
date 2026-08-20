@@ -31,9 +31,16 @@ def create_startup(
     return db_startup
 
 @router.get("/", response_model=List[StartupResponse])
-def get_startups(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get all startups"""
-    startups = db.query(Startup).offset(skip).limit(limit).all()
+def get_startups(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db),
+    current_founder: Founder = Depends(get_current_active_founder)  # 👈 ADD THIS
+):
+    """Get all startups created by the logged-in founder"""
+    startups = db.query(Startup).filter(
+        Startup.founder_id == current_founder.id  # 👈 Filter by logged-in user
+    ).offset(skip).limit(limit).all()
     return startups
 
 @router.get("/{startup_id}", response_model=StartupResponse)

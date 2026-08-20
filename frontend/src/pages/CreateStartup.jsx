@@ -5,6 +5,10 @@ import { useNavigate } from 'react-router-dom';
 export default function CreateStartup() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [startupId, setStartupId] = useState(null);
+  
+  // Startup Data
   const [formData, setFormData] = useState({
     name: '',
     industry: '',
@@ -16,6 +20,10 @@ export default function CreateStartup() {
     market_size: '',
     competition: '',
   });
+  
+  // Invitation Data
+  const [inviteEmail, setInviteEmail] = useState('');
+  
   const [pitchDeck, setPitchDeck] = useState(null);
   const [pitchVideo, setPitchVideo] = useState(null);
 
@@ -30,7 +38,6 @@ export default function CreateStartup() {
     if (!token) return navigate('/login');
 
     try {
-      // CRITICAL FIX: Parse strings to numbers before sending to FastAPI
       const payload = {
         name: formData.name,
         industry: formData.industry,
@@ -39,50 +46,65 @@ export default function CreateStartup() {
         target_customers: formData.target_customers,
         business_model: formData.business_model,
         competition: formData.competition,
-        // Convert empty strings to 0, otherwise parse the float
         funding_requirement: parseFloat(formData.funding_requirement) || 0,
         market_size: parseFloat(formData.market_size) || 0,
       };
 
-      console.log("Sending Payload to Backend:", payload); // Check your F12 Console!
-
-      // 1. Create the Startup
       const startupRes = await axios.post('http://localhost:8000/api/startups/', 
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      const startupId = startupRes.data.id;
+      const id = startupRes.data.id;
+      setStartupId(id); // Save ID so we can invite people now
 
-      // 2. Upload Pitch Deck (if selected)
       if (pitchDeck) {
         const deckForm = new FormData();
         deckForm.append('file', pitchDeck);
-        await axios.post(`http://localhost:8000/api/startups/${startupId}/upload-pitch-deck`, deckForm, {
+        await axios.post(`http://localhost:8000/api/startups/${id}/upload-pitch-deck`, deckForm, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
       }
 
-      // 3. Upload Pitch Video (if selected)
       if (pitchVideo) {
         const videoForm = new FormData();
         videoForm.append('file', pitchVideo);
-        await axios.post(`http://localhost:8000/api/startups/${startupId}/upload-pitch-video`, videoForm, {
+        await axios.post(`http://localhost:8000/api/startups/${id}/upload-pitch-video`, videoForm, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
       }
 
-      alert('Startup created successfully!');
-      navigate('/dashboard');
+      alert('Startup created successfully! You can now invite co-founders.');
     } catch (err) {
-      console.error("Full Error Object:", err); // Check F12 Console for detailed error
-      // Better Error Message extraction
-      const errorMsg = err.response?.data?.detail 
-        ? JSON.stringify(err.response.data.detail) 
-        : err.message;
-      alert('Failed to create startup: ' + errorMsg);
+      console.error(err);
+      alert('Failed to create startup: ' + (err.response?.data?.detail || err.message));
     } finally {
       setLoading(false);
+    }
+  };
+
+    const handleInvite = async (e) => {
+    e.preventDefault();
+    if (!startupId) return alert('Please create the startup first!');
+    if (!inviteEmail) return alert('Please enter an email address.');
+
+    setInviteLoading(true);
+    const token = localStorage.getItem('token'); // Get the token first
+    try {
+      await axios.post(`http://localhost:8000/api/invitations/${startupId}`, 
+        { invitee_email: inviteEmail },
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}` // 👈 THIS WAS MISSING IN THE PREVIOUS CODE
+          } 
+        }
+      );
+      alert(`Invitation sent to ${inviteEmail}!`);
+      setInviteEmail('');
+    } catch (err) {
+      alert('Failed to send invite: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setInviteLoading(false);
     }
   };
 
@@ -98,7 +120,8 @@ export default function CreateStartup() {
           <h1 className="text-3xl font-bold text-gray-800">Launch Your Startup</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Main Startup Form */}
+        <form onSubmit={handleSubmit} className="space-y-6 border-b border-gray-200 pb-8 mb-8">
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Startup Name *</label>
@@ -156,7 +179,6 @@ export default function CreateStartup() {
               className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none" />
           </div>
 
-          {/* File Uploads */}
           <div className="grid grid-cols-2 gap-6 pt-4 border-t border-gray-100">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Pitch Deck (PDF)</label>
@@ -190,6 +212,31 @@ export default function CreateStartup() {
             </button>
           </div>
         </form>
+
+        {/* Invitation Section (Shown after creation) */}
+        {startupId && (
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-6">
+            <h3 className="text-lg font-bold text-purple-800 mb-2">📨 Invite a Co-Founder</h3>
+            <p className="text-sm text-purple-600 mb-4">Send an email invite to your partner so they can view and review this startup.</p>
+            <form onSubmit={handleInvite} className="flex gap-4">
+              <input 
+                type="email" 
+                value={inviteEmail} 
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="cofounder@example.com"
+                className="flex-1 px-4 py-3 bg-white border border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none"
+                required
+              />
+              <button 
+                type="submit" 
+                disabled={inviteLoading}
+                className="px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition disabled:opacity-50"
+              >
+                {inviteLoading ? 'Sending...' : 'Send Invite'}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

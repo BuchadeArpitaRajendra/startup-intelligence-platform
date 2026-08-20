@@ -7,6 +7,8 @@ export default function Dashboard() {
   const [startups, setStartups] = useState([]);
   const navigate = useNavigate();
 
+  
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -26,16 +28,34 @@ export default function Dashboard() {
     }).then(res => setStartups(res.data));
   }, [navigate]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">👋 Welcome, {user?.full_name || 'User'}!</h1>
-          <Link to="/create-startup">
-            <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-purple-500/50 transition-all">
-              + Create New Startup
+          <div className="flex gap-4">
+            <Link to="/invitations">
+              <button className="px-4 py-2 bg-white border border-purple-300 text-purple-600 rounded-xl font-medium hover:bg-purple-50 transition">
+                📨 Invites
+              </button>
+            </Link>
+            <Link to="/create-startup">
+              <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-purple-500/50 transition-all">
+                + Create New Startup
+              </button>
+            </Link>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-3 bg-red-50 text-red-600 rounded-xl font-medium hover:bg-red-100 transition"
+            >
+              Logout
             </button>
-          </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -47,7 +67,9 @@ export default function Dashboard() {
                 <p className="text-gray-500 text-sm mt-2 line-clamp-2">{s.problem_statement || 'No description provided.'}</p>
                 <div className="mt-4 flex justify-between items-center">
                   <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">{s.status || 'Active'}</span>
-                  <button className="text-purple-600 text-sm font-medium hover:underline">View Details →</button>
+                  <Link to={`/startup/${s.id}`}>
+                    <button className="text-purple-600 text-sm font-medium hover:underline">View Details →</button>
+                  </Link>
                 </div>
               </div>
             ))
